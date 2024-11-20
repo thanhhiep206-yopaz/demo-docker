@@ -1,0 +1,61 @@
+version: '2'
+services:
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: docker_development
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - 3307:3306
+    volumes:
+      - mysql-volume:/var/lib/mysql
+  web:
+    build: .
+    tty: true
+    stdin_open: true
+    command: bash -c "chmod +x ./start.sh && ./start.sh"
+    depends_on:
+      - db
+    links:
+      - db
+    ports:
+      - 3001:3001
+    volumes:
+      - ".:/app"
+    environment:
+      DB_USER: root
+      DB_NAME: docker_development
+      DB_PASSWORD: password
+      DB_HOST: db
+  redis:
+    image: redis
+    command: redis-server
+    volumes:
+      - redis-volume:/data
+    ports:
+      - 6380:6379 # change port resolve conflict port in host
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    volumes:
+      - ".:/app"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+  nginx:
+    image: nginx:latest
+    ports:
+      - "81:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d
+      - ./logs/nginx/:/var/log/nginx
+      - ./certs:/etc/ssl/certs
+    depends_on:
+      - web
+volumes:
+  mysql-volume:
+  redis-volume:
