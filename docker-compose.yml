@@ -49,9 +49,9 @@ services:
   nginx:
     image: nginx:latest
     ports:
-      - "81:80"
+      - "80:80"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d
+      - ./nginx:/etc/nginx/conf.d
       - ./logs/nginx/:/var/log/nginx
       - ./certs:/etc/ssl/certs
     depends_on:
